@@ -265,6 +265,134 @@
   .result-box.perfect { background: #d8f3dc; border: 1px solid #52b788; color: #1b4332; }
   .result-box.partial { background: #fff3cd; border: 1px solid #ffc107; color: #664d03; }
   .result-box.submitted { background: #d8f3dc; border: 1px solid #52b788; color: #1b4332; }
+
+  /* Adaptations drag-and-drop */
+  .match-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin-bottom: 20px;
+  }
+  .match-row td {
+    vertical-align: middle;
+  }
+  .match-statement {
+    background: #fff;
+    border: 1.5px solid #b7e4c7;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.4;
+    width: 54%;
+  }
+  .match-arrow {
+    text-align: center;
+    padding: 0 6px;
+    color: #95d5b2;
+    font-size: 18px;
+    width: 8%;
+  }
+  .match-drop {
+    background: #f0faf4;
+    border: 2px dashed #74c69d;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    color: #adb5bd;
+    text-align: center;
+    min-height: 44px;
+    width: 38%;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .match-drop.drag-over {
+    border-color: #2d6a4f;
+    background: rgba(45,106,79,0.1);
+    color: #2d6a4f;
+  }
+  .match-drop.filled {
+    background: #fff;
+    border-style: solid;
+    border-color: #74c69d;
+    color: #1b4332;
+    cursor: default;
+  }
+  .match-drop.correct-ans {
+    background: #d8f3dc;
+    border-color: #40916c;
+    color: #1b4332;
+  }
+  .match-drop.wrong-ans {
+    background: #ffe0e0;
+    border-color: #e63946;
+    color: #c1121f;
+  }
+  .adapt-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 16px;
+  }
+  .adapt-chip {
+    padding: 8px 16px;
+    background: #fff;
+    border: 2px solid #74c69d;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    color: #1b4332;
+    cursor: grab;
+    transition: all 0.15s;
+    user-select: none;
+    touch-action: none;
+  }
+  .adapt-chip:active { cursor: grabbing; }
+  .adapt-chip.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  .adapt-chip.used {
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .adapt-chip.tap-selected {
+    background: #2d6a4f;
+    border-color: #2d6a4f;
+    color: #fff;
+    transform: scale(1.06);
+    box-shadow: 0 2px 10px rgba(45,106,79,0.3);
+  }
+  .adapt-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .btn-check {
+    padding: 10px 28px;
+    background: #2d6a4f;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-check:hover { background: #1b4332; }
+  .btn-check:disabled { background: #ced4da; cursor: default; }
 </style>
 </head>
 <body>
@@ -278,6 +406,7 @@
   <button class="tab-btn active" onclick="switchTab('read1')">📖 Reading 1</button>
   <button class="tab-btn" onclick="switchTab('read2')">🌸 Reading 2</button>
   <button class="tab-btn" onclick="switchTab('activity')">✏️ Activity</button>
+  <button class="tab-btn" onclick="switchTab('adaptations')">🐻 Adaptations</button>
 </div>
 
 <div class="content-wrap">
@@ -371,6 +500,34 @@
       </div>
     </div>
 
+    <!-- ADAPTATIONS DRAG-AND-DROP -->
+    <div id="sec-adaptations" class="section">
+      <div class="tab-hint">Drag words to their matching descriptions</div>
+      <h2>Drag &amp; Drop</h2>
+      <h3>Animal &amp; Plant Adaptations</h3>
+
+      <div class="activity-box">
+        <p style="font-size:14px;color:#52796f;margin-bottom:16px;">
+          Drag each term from the bank below and drop it onto the matching description.
+          On mobile, tap a term to select it, then tap the box where it belongs.
+        </p>
+
+        <!-- Word bank -->
+        <div class="adapt-bank" id="adaptBank"></div>
+
+        <!-- Matching rows -->
+        <table class="match-table" id="matchTable">
+          <tbody id="matchBody"></tbody>
+        </table>
+
+        <div id="adaptResult"></div>
+        <div class="adapt-btns">
+          <button class="btn-check" id="btnCheck" onclick="checkAdapt()">Check Answer</button>
+          <button class="btn-reset" onclick="resetAdapt()">Reset</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -380,9 +537,8 @@ function switchTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('sec-' + id).classList.add('active');
-  const btns = document.querySelectorAll('.tab-btn');
-  const idx = id === 'read1' ? 0 : id === 'read2' ? 1 : 2;
-  btns[idx].classList.add('active');
+  const tabMap = { read1: 0, read2: 1, activity: 2, adaptations: 3 };
+  document.querySelectorAll('.tab-btn')[tabMap[id]].classList.add('active');
 }
 
 // VOCAB TIPS
@@ -524,9 +680,181 @@ function submitAnswers() {
     '<div class="result-box submitted" style="margin-top:16px;">🌿 Great work! Review your answers above to make sure they\'re complete. Diagram score: ' + correct + '/10</div>';
 }
 
+// ============================================================
+// ADAPTATIONS DRAG-AND-DROP MATCHING
+// ============================================================
+const ADAPT_PAIRS = [
+  { id: 'r1', statement: 'Bears adapt to the cold winter climate by sleeping more.', answer: 'Hibernate' },
+  { id: 'r2', statement: 'Birds fly south for the winter.',                          answer: 'Migrate' },
+  { id: 'r3', statement: 'The king snake tricks its enemies by looking like the deadly coral snake.', answer: 'Mimicry' },
+  { id: 'r4', statement: 'The snow hare blends in with its surroundings.',            answer: 'Camouflage' },
+  { id: 'r5', statement: "Changes in an animal's habitat are usually the cause for this.", answer: 'Adaptation' },
+  { id: 'r6', statement: 'Desert plants store water in their stems and leaves.',      answer: 'Structural Adaptation' },
+];
+const ADAPT_TERMS = ['Hibernate', 'Adaptation', 'Mimicry', 'Migrate', 'Camouflage', 'Structural Adaptation'];
+
+let adaptDropped = {};   // rowId → term string
+let adaptSelected = null; // for tap-mode
+let adaptDragTerm = null; // for drag-mode
+let adaptChecked = false;
+
+function buildAdaptBank() {
+  const bank = document.getElementById('adaptBank');
+  bank.innerHTML = '';
+  ADAPT_TERMS.forEach(term => {
+    const chip = document.createElement('div');
+    chip.className = 'adapt-chip';
+    chip.textContent = term;
+    chip.dataset.term = term;
+    const usedInRow = Object.values(adaptDropped).includes(term);
+    if (usedInRow) chip.classList.add('used');
+    if (adaptSelected === term) chip.classList.add('tap-selected');
+
+    // Drag events
+    chip.draggable = !usedInRow;
+    chip.addEventListener('dragstart', e => {
+      if (usedInRow) { e.preventDefault(); return; }
+      adaptDragTerm = term;
+      chip.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', term);
+    });
+    chip.addEventListener('dragend', () => {
+      adaptDragTerm = null;
+      chip.classList.remove('dragging');
+    });
+
+    // Tap/click for mobile
+    chip.addEventListener('click', () => {
+      if (usedInRow || adaptChecked) return;
+      adaptSelected = adaptSelected === term ? null : term;
+      buildAdaptBank();
+      highlightDrops();
+    });
+
+    bank.appendChild(chip);
+  });
+}
+
+function buildAdaptRows() {
+  const tbody = document.getElementById('matchBody');
+  tbody.innerHTML = '';
+  ADAPT_PAIRS.forEach(pair => {
+    const tr = document.createElement('tr');
+    tr.className = 'match-row';
+
+    const tdStmt = document.createElement('td');
+    tdStmt.className = 'match-statement';
+    tdStmt.textContent = pair.statement;
+
+    const tdArrow = document.createElement('td');
+    tdArrow.className = 'match-arrow';
+    tdArrow.innerHTML = '&#8594;';
+
+    const tdDrop = document.createElement('td');
+    tdDrop.className = 'match-drop' + (adaptDropped[pair.id] ? ' filled' : '');
+    tdDrop.id = 'adrop-' + pair.id;
+    tdDrop.textContent = adaptDropped[pair.id] || 'drop here';
+
+    // Drag-over / drop events
+    tdDrop.addEventListener('dragover', e => {
+      if (!adaptDragTerm) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tdDrop.classList.add('drag-over');
+    });
+    tdDrop.addEventListener('dragleave', () => tdDrop.classList.remove('drag-over'));
+    tdDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      tdDrop.classList.remove('drag-over');
+      const term = e.dataTransfer.getData('text/plain') || adaptDragTerm;
+      if (!term || adaptChecked) return;
+      placeTerm(pair.id, term);
+    });
+
+    // Tap-to-place
+    tdDrop.addEventListener('click', () => {
+      if (!adaptSelected || adaptChecked) return;
+      placeTerm(pair.id, adaptSelected);
+      adaptSelected = null;
+    });
+
+    tr.appendChild(tdStmt);
+    tr.appendChild(tdArrow);
+    tr.appendChild(tdDrop);
+    tbody.appendChild(tr);
+  });
+}
+
+function placeTerm(rowId, term) {
+  // Remove term from any previous slot
+  Object.keys(adaptDropped).forEach(k => { if (adaptDropped[k] === term) delete adaptDropped[k]; });
+  adaptDropped[rowId] = term;
+  buildAdaptBank();
+  buildAdaptRows();
+  highlightDrops();
+  document.getElementById('adaptResult').innerHTML = '';
+  adaptChecked = false;
+}
+
+function highlightDrops() {
+  ADAPT_PAIRS.forEach(pair => {
+    const drop = document.getElementById('adrop-' + pair.id);
+    if (!drop) return;
+    drop.classList.remove('drag-over');
+    if (adaptSelected && !adaptDropped[pair.id]) {
+      drop.classList.add('drag-over');
+    } else {
+      drop.classList.remove('drag-over');
+    }
+  });
+}
+
+function checkAdapt() {
+  const allFilled = ADAPT_PAIRS.every(p => adaptDropped[p.id]);
+  if (!allFilled) {
+    document.getElementById('adaptResult').innerHTML =
+      '<div class="result-box partial" style="margin-top:12px;">Fill in all 6 boxes first!</div>';
+    return;
+  }
+  adaptChecked = true;
+  let correct = 0;
+  ADAPT_PAIRS.forEach(pair => {
+    const drop = document.getElementById('adrop-' + pair.id);
+    if (!drop) return;
+    drop.classList.remove('filled', 'drag-over');
+    if (adaptDropped[pair.id] === pair.answer) {
+      drop.classList.add('correct-ans');
+      correct++;
+    } else {
+      drop.classList.add('wrong-ans');
+    }
+  });
+  const total = ADAPT_PAIRS.length;
+  const box = document.getElementById('adaptResult');
+  if (correct === total) {
+    box.innerHTML = '<div class="result-box perfect" style="margin-top:12px;">🌟 Perfect! All 6 correct!</div>';
+  } else {
+    box.innerHTML = '<div class="result-box partial" style="margin-top:12px;">' + correct + '/' + total +
+      ' correct — red boxes need a new answer. Click Reset to try again.</div>';
+  }
+}
+
+function resetAdapt() {
+  adaptDropped = {};
+  adaptSelected = null;
+  adaptDragTerm = null;
+  adaptChecked = false;
+  buildAdaptBank();
+  buildAdaptRows();
+  document.getElementById('adaptResult').innerHTML = '';
+}
+
 // INIT
 buildWordBank();
 buildDropZones();
+buildAdaptBank();
+buildAdaptRows();
 </script>
 </body>
 </html>
